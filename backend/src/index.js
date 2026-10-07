@@ -10,6 +10,7 @@ import fermentationRoutes from './routes/fermentation.js';
 import teamRoutes from './routes/team.js';
 import { initializeSocket } from './services/websocket.js';
 import pool from './db.js';
+import initializeDatabase from './initDb.js';
 
 dotenv.config();
 
@@ -63,16 +64,25 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3001;
-server.listen(PORT, async () => {
-  console.log(`Brewmaster API running on port ${PORT}`);
-  
-  // Test database connection
+
+async function start() {
   try {
+    // Test database connection
     const result = await pool.query('SELECT NOW()');
     console.log('✓ Database connected');
+    
+    // Initialize schema
+    await initializeDatabase();
+    
+    server.listen(PORT, () => {
+      console.log(`✓ Brewmaster API running on port ${PORT}`);
+    });
   } catch (err) {
-    console.error('✗ Database connection failed:', err.message);
+    console.error('✗ Startup failed:', err.message);
+    process.exit(1);
   }
-});
+}
+
+start();
 
 export default app;
