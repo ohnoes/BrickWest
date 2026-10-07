@@ -9,8 +9,17 @@ import batchRoutes from './routes/batches.js';
 import fermentationRoutes from './routes/fermentation.js';
 import teamRoutes from './routes/team.js';
 import { initializeSocket } from './services/websocket.js';
+import pool from './db.js';
 
 dotenv.config();
+
+// Check required env vars
+const requiredEnvVars = ['JWT_SECRET'];
+for (const envVar of requiredEnvVars) {
+  if (!process.env[envVar]) {
+    console.warn(`Warning: ${envVar} not set. Some features may not work.`);
+  }
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -38,6 +47,10 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // WebSocket
 initializeSocket(io);
 
@@ -50,8 +63,16 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
   console.log(`Brewmaster API running on port ${PORT}`);
+  
+  // Test database connection
+  try {
+    const result = await pool.query('SELECT NOW()');
+    console.log('✓ Database connected');
+  } catch (err) {
+    console.error('✗ Database connection failed:', err.message);
+  }
 });
 
 export default app;
