@@ -7,7 +7,7 @@
   "deploy": {
     "restartPolicyType": "on_failure",
     "restartPolicyMaxRetries": 5,
-    "startCommand": "cd backend && npm run start",
+    "startCommand": "npm run start",
     "rootDirectory": "backend"
   }
 }
