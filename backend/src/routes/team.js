@@ -42,7 +42,7 @@ router.patch('/tasks/:id/status', async (req, res, next) => {
   try {
     if (!isId(req.params.id) || !['open','in_progress','done','cancelled'].includes(req.body.status)) return bad(res, 'Invalid task or status');
     const result = await pool.query(
-      "UPDATE brewery_tasks SET status=$1, completed_at=CASE WHEN $1='done' THEN now() ELSE NULL END, completed_by=CASE WHEN $1='done' THEN $2 ELSE NULL END WHERE id=$3 RETURNING *",
+      "UPDATE brewery_tasks SET status=$1::text, completed_at=CASE WHEN $1::text='done' THEN now() ELSE NULL END, completed_by=CASE WHEN $1::text='done' THEN $2::int ELSE NULL END WHERE id=$3 RETURNING *",
       [req.body.status, req.user.id, req.params.id]
     );
     if (!result.rowCount) return res.status(404).json({ error: 'Task not found' });

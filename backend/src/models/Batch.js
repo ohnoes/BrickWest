@@ -68,7 +68,8 @@ export const logBatchPhase = async (batchId, phase, data) => {
 
   return query(
     `INSERT INTO batch_logs (batch_id, phase, temperature, gravity, ph, notes, measured_at)
-     VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, NOW()))`,
+     VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, NOW()))
+     RETURNING *`,
     [batchId, phase, temperature, gravity, ph, notes, measured_at]
   );
 };
