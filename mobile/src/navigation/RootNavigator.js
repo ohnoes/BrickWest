@@ -10,6 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import LoginScreen from '../screens/LoginScreen';
 import BatchesScreen from '../screens/BatchesScreen';
+import BreweryTodayScreen from '../screens/BreweryTodayScreen';
 import BatchDetailScreen from '../screens/BatchDetailScreen';
 import RecipesScreen from '../screens/RecipesScreen';
 import SettingsScreen from '../screens/SettingsScreen';
@@ -101,6 +102,15 @@ const RootNavigator = () => {
             headerTintColor: '#fff'
           }}
         >
+          <Tab.Screen
+            name="Today"
+            component={BreweryTodayScreen}
+            options={{
+              title: 'Brewery Today',
+              tabBarLabel: 'Today',
+              tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🏭</Text>
+            }}
+          />
           <Tab.Screen
             name="Batches"
             component={BatchesNavigator}
