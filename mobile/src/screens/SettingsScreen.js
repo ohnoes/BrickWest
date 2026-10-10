@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { AuthContext } from '../auth/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const SettingsScreen = ({ navigation }) => {
+const SettingsScreen = () => {
+  const { signOut } = useContext(AuthContext);
   const [user, setUser] = useState(null);
 
   React.useEffect(() => {
@@ -21,9 +23,7 @@ const SettingsScreen = ({ navigation }) => {
       {
         text: 'Logout',
         onPress: async () => {
-          await AsyncStorage.removeItem('authToken');
-          await AsyncStorage.removeItem('user');
-          navigation.replace('Login');
+          await signOut();
         }
       }
     ]);
