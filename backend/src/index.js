@@ -9,6 +9,7 @@ import recipeRoutes from './routes/recipes.js';
 import batchRoutes from './routes/batches.js';
 import fermentationRoutes from './routes/fermentation.js';
 import teamRoutes from './routes/team.js';
+import inventoryRoutes from './routes/inventory.js';
 import { initializeSocket } from './services/websocket.js';
 import pool from './db.js';
 import initializeDatabase from './initDb.js';
@@ -35,6 +36,7 @@ app.use('/api/recipes', recipeRoutes);
 app.use('/api/batches', batchRoutes);
 app.use('/api/fermentation', fermentationRoutes);
 app.use('/api/team', teamRoutes);
+app.use('/api/inventory', inventoryRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
