@@ -66,7 +66,7 @@ router.post('/:id/logs', auth, async (req, res, next) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const result = await Batch.logBatchPhase(req.params.id, phase, {
+    await Batch.logBatchPhase(req.params.id, phase, {
       temperature,
       gravity,
       ph,

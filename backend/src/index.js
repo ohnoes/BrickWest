@@ -1,3 +1,4 @@
+import './config.js';
 import express from 'express';
 import cors from 'cors';
 import http from 'http';
@@ -13,14 +14,6 @@ import pool from './db.js';
 import initializeDatabase from './initDb.js';
 
 dotenv.config();
-
-// Check required env vars
-const requiredEnvVars = ['JWT_SECRET'];
-for (const envVar of requiredEnvVars) {
-  if (!process.env[envVar]) {
-    console.warn(`Warning: ${envVar} not set. Some features may not work.`);
-  }
-}
 
 const app = express();
 const server = http.createServer(app);
@@ -56,7 +49,7 @@ app.get('/api/health', (req, res) => {
 initializeSocket(io);
 
 // Error handling
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   console.error(err.stack);
   res.status(err.status || 500).json({
     error: err.message || 'Internal server error'
@@ -68,7 +61,7 @@ const PORT = process.env.PORT || 3001;
 async function start() {
   try {
     // Test database connection
-    const result = await pool.query('SELECT NOW()');
+    await pool.query('SELECT NOW()');
     console.log('✓ Database connected');
     
     // Initialize schema

@@ -11,7 +11,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ../scripts/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      - ../backend/scripts/schema.sql:/docker-entrypoint-initdb.d/schema.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -28,7 +28,7 @@ services:
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: brickwest_brewmaster
-      JWT_SECRET: your-secret-key-change-in-production
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET to a unique secret}
       PORT: 3001
       FRONTEND_URL: http://localhost:3000
     ports:
@@ -38,7 +38,7 @@ services:
         condition: service_healthy
     volumes:
       - ../backend/src:/app/src
-    command: npm run dev
+    command: npm start
 
 volumes:
   postgres_data:

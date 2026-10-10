@@ -13,21 +13,23 @@ import { AuthContext } from '../auth/AuthContext';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
-const LoginScreen = ({ navigation }) => {
+const RegisterScreen = ({ navigation }) => {
   const { signIn } = useContext(AuthContext);
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async () => {
-    if (!email || !password) {
+  const handleRegister = async () => {
+    if (!name || !email || !password) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
     setLoading(true);
     try {
-      const response = await axios.post(`${API_URL}/auth/login`, {
+      const response = await axios.post(`${API_URL}/auth/register`, {
+        name,
         email,
         password
       });
@@ -36,7 +38,7 @@ const LoginScreen = ({ navigation }) => {
       
       await signIn(token, user);
     } catch (error) {
-      Alert.alert('Login Failed', error.response?.data?.error || 'Check your credentials');
+      Alert.alert('Registration Failed', error.response?.data?.error || 'Unable to register');
     } finally {
       setLoading(false);
     }
@@ -47,6 +49,7 @@ const LoginScreen = ({ navigation }) => {
       <Text style={styles.title}>Brewmaster</Text>
       <Text style={styles.subtitle}>Brickwest Brewing</Text>
 
+      <TextInput style={styles.input} placeholder="Name" placeholderTextColor="#999" value={name} onChangeText={setName} editable={!loading} />
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -69,18 +72,18 @@ const LoginScreen = ({ navigation }) => {
 
       <TouchableOpacity
         style={[styles.button, loading && styles.buttonDisabled]}
-        onPress={handleLogin}
+        onPress={handleRegister}
         disabled={loading}
       >
         {loading ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.buttonText}>Login</Text>
+          <Text style={styles.buttonText}>Register</Text>
         )}
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-        <Text style={styles.link}>Don't have an account? Register</Text>
+      <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+        <Text style={styles.link}>Already have an account? Login</Text>
       </TouchableOpacity>
     </View>
   );
@@ -139,4 +142,4 @@ const styles = StyleSheet.create({
   }
 });
 
-export default LoginScreen;
+export default RegisterScreen;

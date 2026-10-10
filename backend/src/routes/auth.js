@@ -4,11 +4,11 @@ import bcryptjs from 'bcryptjs';
 import { query } from '../db.js';
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+import { JWT_SECRET } from '../config.js';
 
 router.post('/register', async (req, res, next) => {
   try {
-    const { email, password, name, role } = req.body;
+    const { email, password, name } = req.body;
 
     if (!email || !password || !name) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -20,7 +20,7 @@ router.post('/register', async (req, res, next) => {
       `INSERT INTO users (email, password_hash, name, role)
        VALUES ($1, $2, $3, $4)
        RETURNING id, email, name, role`,
-      [email, hashedPassword, name, role || 'brewer']
+      [email, hashedPassword, name, 'brewer']
     );
 
     const user = result.rows[0];
