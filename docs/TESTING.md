@@ -73,6 +73,13 @@ To test changes before they reach production, use one of:
 Each environment needs its own `JWT_SECRET`; set `REGISTRATION_CODE` on any that is
 publicly reachable.
 
+## Web app
+
+The API serves a browser app from `backend/public` at the root of the same URL
+(`http://localhost:3001/` locally, or your Railway domain). It is plain HTML, CSS and
+JavaScript with no build step. Sign in or create an account there to use Today, Batches,
+Recipes and Inventory.
+
 ## Mobile app
 
 The `mobile/` folder contains screens and navigation but not the native iOS/Android

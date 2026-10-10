@@ -8,6 +8,7 @@ RUN npm ci --omit=dev && npm cache clean --force
 
 COPY src ./src
 COPY scripts ./scripts
+COPY public ./public
 
 # Drop root: the API never needs to write to its own files.
 USER node
