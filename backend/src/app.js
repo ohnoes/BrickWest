@@ -7,6 +7,7 @@ import recipeRoutes from './routes/recipes.js';
 import batchRoutes from './routes/batches.js';
 import teamRoutes from './routes/team.js';
 import inventoryRoutes from './routes/inventory.js';
+import checklistRoutes from './routes/checklists.js';
 import { errorHandler, notFoundHandler } from './http.js';
 
 const PUBLIC_DIR = fileURLToPath(new URL('../public', import.meta.url));
@@ -62,6 +63,7 @@ export function createApp(options = {}) {
   app.use('/api/batches', batchRoutes);
   app.use('/api/team', teamRoutes);
   app.use('/api/inventory', inventoryRoutes);
+  app.use('/api/checklists', checklistRoutes);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

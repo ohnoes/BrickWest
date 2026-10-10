@@ -132,6 +132,31 @@ dialog h2 { margin-bottom: 1rem; }
 .tasks .when { font-size: 0.88rem; color: var(--ink-soft); }
 .tasks .late .when { color: var(--alarm); font-weight: 600; }
 
+/* ---- Checklists ---- */
+.run { background: var(--foam); border: 1px solid var(--rule); border-radius: 6px; padding: 1rem 1.25rem 0.4rem; margin-bottom: 1rem; }
+.run-head { margin-bottom: 0.5rem; }
+.checklist { margin: 0; padding-left: 1.6rem; }
+.checklist > li { padding: 0.7rem 0; border-top: 1px solid var(--rule); }
+.checklist > li::marker { font-family: var(--display); font-weight: 600; font-size: 1.15rem; color: var(--ink-soft); }
+.checklist > li.step { display: list-item; }
+.step > .step-main, .step > .actions { display: inline-flex; vertical-align: top; }
+.step > .step-main { flex-direction: column; width: calc(100% - 22rem); min-width: 12rem; }
+.step > .actions { width: 21.5rem; max-width: 100%; justify-content: flex-end; }
+.step.done b, .step.skipped b { font-weight: 500; }
+.step .when { font-size: 0.88rem; color: var(--ink-soft); }
+.step .note { font-size: 0.92rem; border-left: 3px solid var(--amber); padding-left: 0.6rem; margin-top: 0.3rem; }
+.step.exception .note { border-color: var(--alarm); }
+.step-value { width: 6.5rem; margin-top: 0; min-height: 2.1rem; padding: 0.25rem 0.5rem; }
+.step details { margin-top: 0.35rem; font-size: 0.88rem; }
+.step summary { cursor: pointer; color: var(--green); font-weight: 500; }
+.history { margin: 0.3rem 0 0; padding-left: 1.1rem; color: var(--ink-soft); }
+.template { margin-bottom: 1rem; }
+.template .section-head { border-bottom: 0; margin-bottom: 0; padding-bottom: 0; }
+.plain-steps { margin: 0.6rem 0 0; padding-left: 1.4rem; }
+.plain-steps li { padding: 0.15rem 0; }
+.button-link { font-weight: 600; padding: 0.3rem 0.7rem; border: 1.5px solid var(--green); border-radius: 4px; text-decoration: none; }
+.button-link:hover { background: #dfe7e2; }
+
 /* ---- Tables ---- */
 .table-wrap { overflow-x: auto; }
 table { border-collapse: collapse; width: 100%; background: var(--foam); border: 1px solid var(--rule); }
@@ -177,10 +202,13 @@ td a { font-weight: 600; }
 @media (max-width: 760px) {
   h1 { font-size: 2.2rem; }
   .shell { grid-template-columns: minmax(0, 1fr); }
-  .rail { position: fixed; inset: auto 0 0 0; height: auto; flex-direction: row; padding: 0.35rem 0.5rem; z-index: 10; gap: 0; }
+  .rail { position: fixed; inset: auto 0 0 0; height: auto; flex-direction: row; padding: 0.35rem 0.3rem; z-index: 10; gap: 0; }
   .brand, .who { display: none; }
   .nav { flex-direction: row; flex: 1; justify-content: space-around; }
-  .nav a { font-size: 1.1rem; padding: 0.6rem 0.5rem; }
+  .nav { justify-content: space-between; overflow-x: auto; }
+  .nav a { font-size: 0.95rem; padding: 0.6rem 0.25rem; white-space: nowrap; }
+  .step > .step-main, .step > .actions { width: 100%; }
+  .step > .actions { justify-content: flex-start; margin-top: 0.5rem; }
   .main { padding: 1.25rem 1rem 6rem; }
   .gate { grid-template-columns: 1fr; }
   .gate-side { padding: 1.75rem 1.25rem; gap: 1rem; }

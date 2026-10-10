@@ -59,7 +59,9 @@ async function api(method, path, body) {
       body: body ? JSON.stringify(body) : undefined
     });
   } catch {
-    throw new ApiError('Could not reach the server. Check your connection and try again.');
+    const error = new ApiError('Could not reach the server. Check your connection and try again.');
+    error.offline = true;
+    throw error;
   }
   const data = await response.json().catch(() => null);
   if (response.status === 401 && store.token && !path.startsWith('/auth/')) {
@@ -143,6 +145,182 @@ function table(headers, rows, emptyText) {
 }
 const cell = (content, num) => h('td', { class: num ? 'num' : '' }, content);
 
+// ---- Checklist steps that could not be sent yet --------------------------------
+// A step recorded with no signal is kept on this device and sent later. Each
+// one carries an id made here, so the server stores it once however many times
+// it is retried.
+const outbox = {
+  read() { try { return JSON.parse(localStorage.getItem('bw.outbox')) || []; } catch { return []; } },
+  write(items) { localStorage.setItem('bw.outbox', JSON.stringify(items)); },
+  add(item) { this.write([...this.read(), item]); },
+  has(runId, stepId) { return this.read().some(i => i.runId === runId && i.stepId === stepId); },
+  async flush() {
+    let sent = 0;
+    for (const item of this.read()) {
+      try {
+        await api('POST', `/checklists/runs/${item.runId}/steps/${item.stepId}`, item.body);
+        sent += 1;
+      } catch (err) {
+        if (err.offline) break;
+        toast(`A saved checklist step was not accepted: ${err.message}`);
+      }
+      this.write(this.read().filter(i => i.body.client_event_id !== item.body.client_event_id));
+    }
+    return sent;
+  }
+};
+
+async function recordStep(run, step, body) {
+  const payload = { ...body, client_event_id: crypto.randomUUID(), performed_at: new Date().toISOString() };
+  try {
+    await api('POST', `/checklists/runs/${run.id}/steps/${step.id}`, payload);
+    return 'sent';
+  } catch (err) {
+    if (!err.offline) throw err;
+    outbox.add({ runId: run.id, stepId: step.id, body: payload });
+    return 'queued';
+  }
+}
+
+const rangeText = step => {
+  const unit = step.value_unit ? ` ${step.value_unit}` : '';
+  if (step.value_min != null && step.value_max != null) return `Expected ${fmtNumber(step.value_min)} to ${fmtNumber(step.value_max)}${unit}`;
+  if (step.value_min != null) return `Expected at least ${fmtNumber(step.value_min)}${unit}`;
+  if (step.value_max != null) return `Expected at most ${fmtNumber(step.value_max)}${unit}`;
+  return step.requires_value ? `Record the value${unit ? ` in${unit}` : ''}` : '';
+};
+const STEP_WORDS = { done: 'Done', skipped: 'Skipped', exception: 'Problem', reopened: 'Reopened' };
+
+function checklistRun(run) {
+  const askReason = (title, submit, onReason, intro) => openDialog(title, {
+    intro, submit, fields: [{ name: 'note', label: 'Reason', required: true, wide: true, type: 'textarea' }],
+    onSubmit: values => onReason(values.note)
+  });
+
+  const stepRow = step => {
+    const row = h('li', { class: `step ${step.state}` });
+    const send = async body => {
+      const outcome = await recordStep(run, step, body);
+      if (outcome === 'queued') {
+        toast('No connection. Saved on this device and will send when you are back online.');
+        row.replaceChildren(h('div', { class: 'step-main' }, h('b', {}, step.title), h('span', { class: 'when' }, 'Waiting to send')), statusTag('Saved here', 'in_progress'));
+      } else { toast('Step recorded'); render(); }
+    };
+    const guarded = action => async () => { try { await action(); } catch (err) { toast(err.message); } };
+
+    if (outbox.has(run.id, step.id)) {
+      row.append(h('div', { class: 'step-main' }, h('b', {}, step.title), h('span', { class: 'when' }, 'Waiting to send')), statusTag('Saved here', 'in_progress'));
+      return row;
+    }
+
+    if (step.state === 'pending') {
+      const input = step.requires_value
+        ? h('input', { type: 'number', step: 'any', inputMode: 'decimal', class: 'step-value', 'aria-label': `${step.title}${step.value_unit ? `, ${step.value_unit}` : ''}`, placeholder: step.value_unit || 'Value' })
+        : null;
+      const done = guarded(async () => {
+        const body = { status: 'done' };
+        if (input) {
+          if (input.value.trim() === '') { input.focus(); return toast('Enter the measured value first.'); }
+          body.measured_value = Number(input.value);
+          const low = step.value_min != null && body.measured_value < Number(step.value_min);
+          const high = step.value_max != null && body.measured_value > Number(step.value_max);
+          if (low || high) {
+            return askReason('That value is outside the expected range', 'Record with note', note => send({ ...body, note }),
+              `${rangeText(step)}. You entered ${body.measured_value}. Say what happened so it is on the record.`);
+          }
+        }
+        await send(body);
+      });
+      row.append(
+        h('div', { class: 'step-main' }, h('b', {}, step.title), rangeText(step) ? h('span', { class: 'when' }, rangeText(step)) : null),
+        h('div', { class: 'actions' }, input,
+          h('button', { class: 'small', onclick: done }, 'Done'),
+          h('button', { class: 'quiet small', onclick: () => askReason(`Skip "${step.title}"`, 'Skip step', note => send({ status: 'skipped', note })) }, 'Skip'),
+          h('button', { class: 'danger small', onclick: () => askReason(`Report a problem with "${step.title}"`, 'Report problem', note => send({ status: 'exception', note }), 'The step is marked as a problem and stays visible to the team.') }, 'Problem')));
+      return row;
+    }
+
+    const latest = step.latest;
+    const flagged = step.state === 'exception' || latest.out_of_range;
+    row.append(
+      h('div', { class: 'step-main' },
+        h('b', {}, step.title),
+        h('span', { class: 'when' },
+          latest.measured_value != null ? `${fmtNumber(latest.measured_value)}${step.value_unit ? ` ${step.value_unit}` : ''}, ` : '',
+          `${latest.operator_name}, ${fmtDateTime(latest.performed_at)}`),
+        latest.note ? h('span', { class: 'note' }, latest.note) : null,
+        step.history.length > 1 ? h('details', {}, h('summary', {}, `History, ${step.history.length} entries`),
+          h('ul', { class: 'history' }, step.history.map(e => h('li', {},
+            `${STEP_WORDS[e.status]}`, e.measured_value != null ? ` ${fmtNumber(e.measured_value)}${step.value_unit ? ` ${step.value_unit}` : ''}` : '',
+            ` by ${e.operator_name}, ${fmtDateTime(e.performed_at)}`, e.note ? `. ${e.note}` : '')))) : null),
+      h('div', { class: 'actions' },
+        latest.out_of_range && step.state === 'done' ? statusTag('Out of range', 'low') : statusTag(STEP_WORDS[step.state], flagged ? 'low' : step.state === 'done' ? 'done' : ''),
+        h('button', { class: 'quiet small', onclick: () => askReason(`Reopen "${step.title}"`, 'Reopen step', note => send({ status: 'reopened', note }), 'The earlier entry stays in the history.') }, 'Reopen')));
+    return row;
+  };
+
+  const recorded = run.total_steps - run.remaining_steps;
+  return h('div', { class: 'run' },
+    h('div', { class: 'run-head' },
+      h('h3', {}, `${run.name}, version ${run.version}`),
+      h('p', { class: 'muted' }, run.complete ? `All ${run.total_steps} steps recorded` : `${recorded} of ${run.total_steps} steps recorded`,
+        run.exceptions ? `, ${run.exceptions} flagged` : '', `. Started by ${run.started_by_name}.`)),
+    h('ol', { class: 'checklist' }, run.steps.map(stepRow)));
+}
+
+// "Mash-in temperature = °C 64-68" -> a measured step with a unit and range.
+function parseSteps(text) {
+  return text.split('\n').map(line => line.trim()).filter(Boolean).map(line => {
+    const match = line.match(/^(.*?)\s*=\s*([^\s\d-][^\s]*)?\s*(?:(-?[\d.]+)\s*(?:to|-|–)\s*(-?[\d.]+))?$/);
+    if (!match || !match[1]) return { title: line };
+    const step = { title: match[1].trim(), requires_value: true };
+    if (match[2]) step.value_unit = match[2];
+    if (match[3] != null) { step.value_min = Number(match[3]); step.value_max = Number(match[4]); }
+    return step;
+  });
+}
+const stepLine = step => (step.requires_value
+  ? `${step.title} = ${step.value_unit || ''}${step.value_min != null && step.value_max != null ? ` ${fmtNumber(step.value_min)}-${fmtNumber(step.value_max)}` : ''}`.trim()
+  : step.title);
+
+async function checklistsView() {
+  const templates = await api('GET', '/checklists/templates');
+  const stageOptions = [{ value: '', label: 'Any stage' }, ...STATUSES.map(s => ({ value: s, label: label(s) }))];
+
+  const edit = template => openDialog(template ? `Edit ${template.name}` : 'New checklist', {
+    intro: template ? `Saving creates version ${template.version + 1}. Batches already using version ${template.version} keep it.` : null,
+    submit: template ? 'Save new version' : 'Save checklist',
+    fields: [
+      { name: 'name', label: 'Name', required: true, value: template?.name, placeholder: 'Mash-in SOP' },
+      { name: 'stage', label: 'Used at', type: 'select', value: template?.stage ?? '', options: stageOptions },
+      { name: 'steps', label: 'Steps', type: 'textarea', wide: true, required: true, value: template?.steps.map(stepLine).join('\n'),
+        hint: 'one per line; for a measurement add = unit and range', placeholder: 'Check mill gap\nMash-in temperature = °C 64-68\nSanitise transfer hose' }
+    ],
+    onSubmit: async values => {
+      await api('POST', '/checklists/templates', { ...values, name: template ? template.name : values.name, steps: parseSteps(values.steps) });
+      toast(template ? 'New version saved' : 'Checklist saved'); render();
+    }
+  });
+
+  const retire = async template => {
+    if (!confirm(`Retire "${template.name}"? Batches already using it keep their record.`)) return;
+    try { await api('DELETE', `/checklists/templates/${template.id}`); toast('Checklist retired'); render(); } catch (err) { toast(err.message); }
+  };
+
+  return h('div', {},
+    h('div', { class: 'page-head' },
+      h('div', {}, h('h1', {}, 'Checklists'), h('p', {}, 'Standard steps for each stage of a brew day. Start one from a batch.')),
+      h('button', { onclick: () => edit() }, 'New checklist')),
+    templates.length
+      ? templates.map(t => h('section', { class: 'panel template' },
+        h('div', { class: 'section-head' },
+          h('h2', {}, t.name),
+          h('div', { class: 'actions' }, h('button', { class: 'quiet small', onclick: () => edit(t) }, 'Edit'), h('button', { class: 'danger small', onclick: () => retire(t) }, 'Retire'))),
+        h('p', { class: 'muted' }, `Version ${t.version}, ${t.stage ? `used at ${t.stage}` : 'any stage'}, written by ${t.created_by_name}`),
+        h('ol', { class: 'plain-steps' }, t.steps.map(step => h('li', {}, step.title, rangeText(step) ? h('span', { class: 'muted' }, ` (${rangeText(step)})`) : null)))))
+      : h('p', { class: 'empty' }, 'No checklists yet. Write one for mash-in, knock-out, transfer or packaging so every brew day follows the same steps.'));
+}
+
 // ---- Sign in ---------------------------------------------------------------
 function signInView() {
   let creating = false;
@@ -179,8 +357,9 @@ function signInView() {
 
 // ---- Today -----------------------------------------------------------------
 async function todayView() {
-  const [today, tasks, vessels, batches] = await Promise.all([
-    api('GET', '/team/today'), api('GET', '/team/tasks'), api('GET', '/team/vessels'), api('GET', '/batches?limit=200')
+  const [today, tasks, vessels, batches, openRuns] = await Promise.all([
+    api('GET', '/team/today'), api('GET', '/team/tasks'), api('GET', '/team/vessels'), api('GET', '/batches?limit=200'),
+    api('GET', '/checklists/open')
   ]);
   const activeBatches = batches.filter(b => !['complete', 'discarded'].includes(b.status));
   const activeCount = today.batches.reduce((sum, row) => sum + Number(row.count), 0);
@@ -261,7 +440,16 @@ async function todayView() {
             task.status === 'open' ? h('button', { class: 'quiet small', onclick: () => setTask(task, 'in_progress') }, 'Start') : statusTag('in_progress'),
             h('button', { class: 'small', onclick: () => setTask(task, 'done') }, 'Done'));
         }))
-        : h('p', { class: 'empty' }, 'Nothing open. Add a task to remind the team about dry hops, transfers or cleaning.')));
+        : h('p', { class: 'empty' }, 'Nothing open. Add a task to remind the team about dry hops, transfers or cleaning.')),
+
+    openRuns.length
+      ? h('section', { class: 'section' },
+        h('div', { class: 'section-head' }, h('h2', {}, 'Checklists to finish')),
+        h('ul', { class: 'tasks' }, openRuns.map(run => h('li', { class: run.exceptions ? 'late' : '' },
+          h('div', { class: 'what' }, h('b', {}, `${run.name} on ${run.batch_number}`),
+            h('span', { class: 'when' }, `${run.remaining_steps} of ${run.total_steps} steps left`, run.next_step ? `, next: ${run.next_step}` : '', run.exceptions ? `, ${run.exceptions} flagged` : '')),
+          h('a', { class: 'button-link', href: `#/batches/${run.batch_id}` }, 'Open')))))
+      : null);
 }
 
 // ---- Batches ---------------------------------------------------------------
@@ -323,9 +511,23 @@ function chart(title, unit, points) {
 }
 
 async function batchView(id) {
-  const [batch, logs, usage] = await Promise.all([
-    api('GET', `/batches/${id}`), api('GET', `/batches/${id}/logs`), api('GET', `/inventory/batches/${id}/usage`).catch(() => null)
+  const [batch, logs, usage, runs, templates] = await Promise.all([
+    api('GET', `/batches/${id}`), api('GET', `/batches/${id}/logs`), api('GET', `/inventory/batches/${id}/usage`).catch(() => null),
+    api('GET', `/checklists/batches/${id}`), api('GET', '/checklists/templates')
   ]);
+  const unused = templates.filter(t => !runs.some(r => r.template_id === t.id));
+  const startChecklist = () => {
+    if (!templates.length) return toast('Write a checklist first, on the Checklists page.');
+    if (!unused.length) return toast('Every checklist has already been started for this batch.');
+    // Offer the ones written for the stage this batch is at first.
+    const ordered = [...unused].sort((a, b) => (b.stage === batch.status) - (a.stage === batch.status));
+    openDialog('Start a checklist', {
+      submit: 'Start checklist',
+      fields: [{ name: 'template_id', label: 'Checklist', type: 'select', numeric: true, required: true,
+        options: ordered.map(t => ({ value: t.id, label: `${t.name}${t.stage ? ` (${t.stage})` : ''}` })) }],
+      onSubmit: async values => { await api('POST', `/checklists/batches/${id}`, values); toast('Checklist started'); render(); }
+    });
+  };
   const index = STATUSES.indexOf(batch.status);
   const next = index >= 0 && index < STATUSES.length - 1 ? STATUSES[index + 1] : null;
   const closed = ['complete', 'discarded'].includes(batch.status);
@@ -361,6 +563,11 @@ async function batchView(id) {
       ? h('ol', { class: 'steps', 'aria-label': 'Brewing stage' }, STATUSES.map((s, i) => h('li', { class: i < index ? 'done' : i === index ? 'now' : '', 'aria-current': i === index ? 'step' : undefined }, label(s))))
       : null,
     batch.notes ? h('p', { class: 'panel' }, batch.notes) : null,
+
+    h('section', { class: 'section' },
+      h('div', { class: 'section-head' }, h('h2', {}, 'Checklists'),
+        !closed ? h('button', { class: 'quiet small', onclick: startChecklist }, 'Start a checklist') : null),
+      runs.length ? runs.map(checklistRun) : h('p', { class: 'empty' }, 'No checklist started for this batch.')),
 
     h('section', { class: 'section' },
       h('div', { class: 'section-head' }, h('h2', {}, 'Readings')),
@@ -534,7 +741,7 @@ async function inventoryView() {
 }
 
 // ---- Router and shell ------------------------------------------------------
-const NAV = [['today', 'Today'], ['batches', 'Batches'], ['recipes', 'Recipes'], ['inventory', 'Inventory']];
+const NAV = [['today', 'Today'], ['batches', 'Batches'], ['checklists', 'Checklists'], ['recipes', 'Recipes'], ['inventory', 'Inventory']];
 let renderCount = 0;
 
 async function render() {
@@ -557,8 +764,10 @@ async function render() {
   if (!app.querySelector('.shell')) { main.append(h('p', { class: 'muted' }, 'Loading…')); app.replaceChildren(shell); }
   let content;
   try {
+    if (outbox.read().length) await outbox.flush();
     if (section === 'batches' && id) content = await batchView(id);
     else if (section === 'batches') content = await batchesView(params);
+    else if (section === 'checklists') content = await checklistsView();
     else if (section === 'recipes') content = await recipesView();
     else if (section === 'inventory') content = await inventoryView();
     else content = await todayView();
@@ -576,4 +785,10 @@ async function render() {
 }
 
 window.addEventListener('hashchange', render);
+// Back in range: send anything recorded while offline, then refresh.
+window.addEventListener('online', async () => {
+  if (!store.token || !outbox.read().length) return;
+  const sent = await outbox.flush();
+  if (sent) { toast(sent === 1 ? 'Sent 1 saved checklist step' : `Sent ${sent} saved checklist steps`); render(); }
+});
 render();
