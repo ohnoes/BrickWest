@@ -18,6 +18,7 @@ const RegisterScreen = ({ navigation }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [registrationCode, setRegistrationCode] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
@@ -31,7 +32,8 @@ const RegisterScreen = ({ navigation }) => {
       const response = await axios.post(`${API_URL}/auth/register`, {
         name,
         email,
-        password
+        password,
+        registration_code: registrationCode.trim() || undefined
       });
 
       const { token, user } = response.data;
@@ -68,6 +70,17 @@ const RegisterScreen = ({ navigation }) => {
         onChangeText={setPassword}
         editable={!loading}
         secureTextEntry
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Registration code (if your brewery uses one)"
+        placeholderTextColor="#999"
+        value={registrationCode}
+        onChangeText={setRegistrationCode}
+        editable={!loading}
+        autoCapitalize="none"
+        autoCorrect={false}
       />
 
       <TouchableOpacity

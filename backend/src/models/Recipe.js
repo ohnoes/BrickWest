@@ -32,7 +32,7 @@ export const createRecipe = async (brewerId, data) => {
     `INSERT INTO recipes (brewer_id, name, style, target_abv, target_ibu, volume_liters, ingredients, notes, version)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 1)
      RETURNING *`,
-    [brewerId, name, style, target_abv, target_ibu, volume_liters, JSON.stringify(ingredients), notes]
+    [brewerId, name, style, target_abv, target_ibu, volume_liters, ingredients == null ? null : JSON.stringify(ingredients), notes]
   );
 };
 
@@ -58,7 +58,7 @@ export const updateRecipe = async (id, data) => {
 
 export const deleteRecipe = async (id) => {
   return query(
-    `UPDATE recipes SET deleted_at = NOW() WHERE id = $1 RETURNING *`,
+    `UPDATE recipes SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING *`,
     [id]
   );
 };
