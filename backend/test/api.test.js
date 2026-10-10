@@ -53,6 +53,22 @@ test('health check and unknown routes', { skip }, async () => {
   assert.equal(placeholder.status, 404);
 });
 
+test('the web app is served with a strict content security policy', { skip }, async () => {
+  const page = await api.get('/');
+  assert.equal(page.status, 200);
+  assert.match(page.headers['content-type'], /text\/html/);
+  assert.match(page.text, /Brickwest Brewmaster/);
+  const csp = page.headers['content-security-policy'];
+  assert.match(csp, /default-src 'self'/);
+  assert.doesNotMatch(csp, /unsafe-inline|unsafe-eval/);
+
+  for (const asset of ['/app.js', '/app.css']) {
+    assert.equal((await api.get(asset)).status, 200, asset);
+  }
+  // No inline script or style, which the policy would block.
+  assert.doesNotMatch(page.text, /<script(?![^>]*\bsrc=)|<style|\sstyle=|\son[a-z]+=/i);
+});
+
 test('malformed and oversized bodies are rejected cleanly', { skip }, async () => {
   const malformed = await api.post('/api/auth/login').set('Content-Type', 'application/json').send('{"email":');
   assert.equal(malformed.status, 400);
