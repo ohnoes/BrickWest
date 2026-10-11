@@ -311,3 +311,111 @@ test('inventory receiving, consumption and lot traceability', { skip }, async ()
   assert.equal(usage.status, 200, JSON.stringify(usage.body));
   assert.equal(usage.body.lots.length, 1);
 });
+
+test('brew-day checklists: versions, execution, idempotent retries and history', { skip }, async () => {
+  const { randomUUID } = await import('node:crypto');
+  const name = `Mash SOP ${run}`;
+  const steps = [
+    { title: 'Check mill gap' },
+    { title: 'Mash-in temperature', requires_value: true, value_unit: '°C', value_min: 64, value_max: 68 },
+    { title: 'Sanitise transfer hose' }
+  ];
+
+  assert.equal((await api.get('/api/checklists/templates')).status, 401);
+  const post = body => authed(api.post('/api/checklists/templates')).send(body);
+  assert.equal((await post({ name, steps: [] })).status, 400);
+  assert.equal((await post({ name, stage: 'drinking', steps })).status, 400);
+  assert.equal((await post({ name, steps: [{ title: 'x', value_min: 1 }] })).status, 400);
+  assert.equal((await post({ name, steps: [{ title: 'x', requires_value: true, value_min: 9, value_max: 1 }] })).status, 400);
+
+  const v1 = await post({ name, stage: 'mashing', steps: steps.slice(0, 2) });
+  assert.equal(v1.status, 201, JSON.stringify(v1.body));
+  assert.equal(v1.body.version, 1);
+  assert.equal(v1.body.steps.length, 2);
+
+  const batch = await authed(api.post('/api/batches')).send({ batch_number: `C-${run}` });
+  const start = id => authed(api.post(`/api/checklists/batches/${batch.body.id}`)).send({ template_id: id });
+  const oldRun = await start(v1.body.id);
+  assert.equal(oldRun.status, 201, JSON.stringify(oldRun.body));
+
+  // Saving under the same name makes version 2 and retires version 1.
+  const v2 = await post({ name: name.toUpperCase(), stage: 'mashing', steps });
+  assert.equal(v2.status, 201, JSON.stringify(v2.body));
+  assert.equal(v2.body.version, 2);
+  const listed = await authed(api.get('/api/checklists/templates?stage=mashing'));
+  assert.equal(listed.status, 200);
+  const mine = listed.body.filter(t => t.name.toLowerCase() === name.toLowerCase());
+  assert.deepEqual(mine.map(t => t.version), [2]);
+  assert.equal((await authed(api.get('/api/checklists/templates?stage=nope'))).status, 400);
+
+  // The run started on version 1 still shows version 1's two steps.
+  let runs = await authed(api.get(`/api/checklists/batches/${batch.body.id}`));
+  assert.equal(runs.body[0].version, 1);
+  assert.equal(runs.body[0].total_steps, 2);
+  assert.equal((await start(v1.body.id)).status, 200, 'restarting an existing run is not an error');
+  assert.equal((await start(2147483000)).status, 404);
+
+  const started = await start(v2.body.id);
+  assert.equal(started.status, 201);
+  assert.equal((await start(v2.body.id)).body.id, started.body.id);
+  const runId = started.body.id;
+  const [gap, temp, hose] = started.body.steps;
+  assert.equal(started.body.remaining_steps, 3);
+
+  const record = (stepId, body) => authed(api.post(`/api/checklists/runs/${runId}/steps/${stepId}`))
+    .send({ client_event_id: randomUUID(), ...body });
+  assert.equal((await record(gap.id, { status: 'finished' })).status, 400);
+  assert.equal((await record(gap.id, { status: 'done', client_event_id: 'not-a-uuid' })).status, 400);
+  assert.equal((await record(temp.id, { status: 'done' })).status, 400, 'a measured step needs its value');
+  assert.equal((await record(temp.id, { status: 'done', measured_value: 72 })).status, 400, 'out of range needs a note');
+  assert.equal((await record(hose.id, { status: 'skipped' })).status, 400, 'skipping needs a reason');
+  assert.equal((await record(gap.id, { status: 'reopened', note: 'oops' })).status, 409);
+  assert.equal((await record(v1.body.steps[0].id, { status: 'done' })).status, 404, 'step from another checklist');
+
+  // The same action sent twice (a retry after a dropped connection) is stored once.
+  const eventId = randomUUID();
+  const first = await record(gap.id, { status: 'done', client_event_id: eventId });
+  assert.equal(first.status, 201, JSON.stringify(first.body));
+  const retry = await record(gap.id, { status: 'done', client_event_id: eventId });
+  assert.equal(retry.status, 200);
+  assert.equal(retry.body.steps[0].history.length, 1);
+  assert.equal((await record(hose.id, { status: 'done', client_event_id: eventId })).status, 409);
+  assert.equal((await record(gap.id, { status: 'done' })).status, 409, 'already recorded');
+
+  const hot = await record(temp.id, { status: 'done', measured_value: 72, note: 'Strike water overshot' });
+  assert.equal(hot.status, 201, JSON.stringify(hot.body));
+  assert.equal(hot.body.steps[1].latest.out_of_range, true);
+  assert.equal(hot.body.exceptions, 1);
+
+  const open = await authed(api.get('/api/checklists/open'));
+  assert.equal(open.status, 200);
+  const pending = open.body.find(r => r.id === runId);
+  assert.equal(pending.remaining_steps, 1);
+  assert.equal(pending.next_step, 'Sanitise transfer hose');
+
+  const skipped = await record(hose.id, { status: 'skipped', note: 'Hard-piped today' });
+  assert.equal(skipped.body.complete, true);
+  assert.ok(!(await authed(api.get('/api/checklists/open'))).body.some(r => r.id === runId));
+
+  // Corrections add to the history instead of replacing it.
+  const reopened = await record(temp.id, { status: 'reopened', note: 'Probe was miscalibrated' });
+  assert.equal(reopened.body.steps[1].state, 'pending');
+  assert.equal(reopened.body.complete, false);
+  const fixed = await record(temp.id, { status: 'done', measured_value: 66.5 });
+  assert.equal(fixed.status, 201);
+  const history = fixed.body.steps[1].history;
+  assert.deepEqual(history.map(e => e.status), ['done', 'reopened', 'done']);
+  assert.equal(Number(history[0].measured_value), 72);
+  assert.equal(history[2].operator_name, 'Test Brewer');
+  assert.equal(fixed.body.complete, true);
+
+  // The history cannot be rewritten, even with direct database access.
+  await assert.rejects(pool.query('UPDATE checklist_step_events SET note = $1 WHERE batch_checklist_id = $2', ['edited', runId]), /append-only/);
+  await assert.rejects(pool.query('DELETE FROM checklist_step_events WHERE batch_checklist_id = $1', [runId]), /append-only/);
+
+  assert.equal((await authed(api.delete(`/api/checklists/templates/${v2.body.id}`))).status, 200);
+  assert.equal((await authed(api.delete(`/api/checklists/templates/${v2.body.id}`))).status, 404);
+  // A retired checklist's runs are still readable.
+  runs = await authed(api.get(`/api/checklists/batches/${batch.body.id}`));
+  assert.equal(runs.body.length, 2);
+});
