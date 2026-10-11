@@ -99,6 +99,6 @@ export function installEasterEggs({ toast }) {
   });
 
   // For whoever opens the dev tools.
-  console.log('%c\n   .~~~~.\n   i====i_\n   |cccc|_)\n   |cccc|\n   `-==-´\n', 'color:#c4820e;font-family:monospace');
-  console.log('%cBrickwest Brewmaster. Poking around the source? Hoppy to see you. 🍺 (Try the Konami code.)', 'color:#1e4a39;font-weight:600');
+  console.log('%c\n   .~~~~.\n   i====i_\n   |cccc|_)\n   |cccc|\n   `-==-´\n', 'color:#d6a641;font-family:monospace');
+  console.log('%cBrick West Brewmaster. Poking around the source? Hoppy to see you. 🍺 (Try the Konami code.)', 'color:#78101a;font-weight:600');
 }

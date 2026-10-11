@@ -354,7 +354,7 @@ function signInView() {
     h('div', { class: 'gate-side' },
       h('div', {},
         h('img', { class: 'brand-mark gate-mark', src: '/brand/mark.svg', alt: '', width: 72, height: 72 }),
-        h('h1', {}, 'Brickwest', h('br'), 'Brewmaster')),
+        h('h1', {}, 'Brick West', h('br'), 'Brewmaster')),
       h('p', {}, quip('tagline'))),
     holder);
 }
@@ -760,8 +760,8 @@ async function render() {
   const shell = h('div', { class: 'shell' },
     h('aside', { class: 'rail' },
       h('div', { class: 'brand' },
-        h('img', { class: 'brand-mark', src: '/brand/mark.svg', alt: '', width: 40, height: 40, title: 'Brickwest' }),
-        h('span', {}, 'Brickwest', h('small', {}, 'Brewmaster'))),
+        h('img', { class: 'brand-mark', src: '/brand/mark.svg', alt: '', width: 40, height: 40, title: 'Brick West Brewing Co.' }),
+        h('span', {}, 'Brick West', h('small', {}, 'Brewmaster'))),
       h('nav', { class: 'nav', 'aria-label': 'Sections' }, NAV.map(([key, text]) => h('a', { href: `#/${key}`, 'aria-current': key === section ? 'page' : undefined }, text))),
       h('div', { class: 'who' }, store.user?.name || store.user?.email || '', h('br'), h('button', { class: 'quiet small', onclick: signOut }, 'Sign out'))),
     main);

@@ -1,19 +1,22 @@
-# Brickwest brand
+# Brick West brand
 
 Internal tool, so we get to have fun. Useful information always comes first; the joke rides along after it.
 
 ## Mark
-`backend/public/brand/mark.svg` (also `favicon.svg`): a pint laid in brick courses under a head of foam, on Brickwest green.
+`backend/public/brand/mark.svg`: the boxed BW monogram from the Brick West Brewing Co. logo, rebuilt so it reads at icon sizes. The original's tiny stacked "BC" is gone; two gold brick courses sit under the letters instead. `favicon.svg` is a simplified version for 16px.
+
+Wordmark: **BRICK WEST** in spaced uppercase condensed caps, as on [brickwestbrewingco.com](https://brickwestbrewingco.com/).
 
 ## Colour
+Taken from brickwestbrewingco.com.
+
 | Token | Hex | Use |
 | --- | --- | --- |
-| Brickwest green | `#1e4a39` | Rail, sign-in, primary buttons |
-| Deep green | `#153628` | Hover, mobile night background (`#0f1d18`) |
-| Wort amber | `#c4820e` (`#e0a03a` on dark) | Full tanks, focus, quips, accents |
-| Brick | `#9c3d2a` | The brick course along the top of the rail |
-| Stainless | `#eef1ef` | Page background |
-| Foam | `#fffaf0` / `#ffffff` | Cards, fields |
+| Brick West red | `#78101a` | Monogram, sign-in panel, primary buttons |
+| Deep red | `#5a0b13` | Hover |
+| Near-black | `#181313` | Sidebar rail, text, mobile background |
+| Gold | `#d6a641` (`#8a5f0f` for text) | Brick courses, full tanks, focus, quips |
+| Cream | `#f2e4c8` / `#f4ede0` | Monogram letters, page background |
 
 Web tokens live in `backend/public/app.css`; mobile tokens in `mobile/src/brand/index.js`.
 

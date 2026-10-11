@@ -2,12 +2,12 @@
 // The web app's copy lives in backend/public/brand.js; keep the two in step.
 
 export const colors = {
-  green: '#1e4a39',     // Brickwest green (headers, primary surfaces on web)
-  bg: '#0f1d18',        // deep bottle-green night background
-  surface: '#1b3229',   // cards and inputs
-  amber: '#e0a03a',     // wort amber, lifted a touch for dark backgrounds
-  brick: '#9c3d2a',     // brick red accent
-  foam: '#fffaf0',
+  red: '#78101a',       // Brick West red (the BW monogram)
+  bg: '#181313',        // near-black, as on brickwestbrewingco.com
+  surface: '#2a2020',   // cards and inputs
+  amber: '#d6a641',     // Brick West gold
+  brick: '#850e19',     // brick red accent
+  cream: '#f2e4c8',
 };
 
 const pick = list => list[Math.floor(Math.random() * list.length)];
