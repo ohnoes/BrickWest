@@ -220,6 +220,16 @@ td a { font-weight: 600; }
   .mobile-only { display: block; }
 }
 @media (min-width: 761px) { .mobile-only { display: none; } }
+.scan-video { display: block; width: 100%; max-width: 520px; max-height: 360px; margin: 1rem 0; background: #111; }
+.scan-video[hidden] { display: none; }
+.label-print { text-align: center; overflow-wrap: anywhere; }
+.label-print img { display: block; margin: 0 auto; }
+@media print {
+  body:has(.label-print[open]) > :not(.label-print) { display: none !important; }
+  .label-print[open] { position: static; border: 0; box-shadow: none; margin: 0; width: auto; color: #000; }
+  .label-print button { display: none; }
+  .label-print::backdrop { background: transparent; }
+}
 @media (prefers-reduced-motion: no-preference) {
   dialog[open] { animation: rise 0.16s ease-out; }
   @keyframes rise { from { opacity: 0; transform: translateY(8px); } }

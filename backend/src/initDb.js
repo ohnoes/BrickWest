@@ -6,6 +6,7 @@ export default async function initializeDatabase(database = pool) {
   const operations = readFileSync(new URL('../scripts/operations.sql', import.meta.url), 'utf8');
   const inventory = readFileSync(new URL('../scripts/inventory.sql', import.meta.url), 'utf8');
   const checklists = readFileSync(new URL('../scripts/checklists.sql', import.meta.url), 'utf8');
+  const scanning = readFileSync(new URL('../scripts/scanning.sql', import.meta.url), 'utf8');
   const client = await database.connect();
   try {
     await client.query('BEGIN');
@@ -15,6 +16,7 @@ export default async function initializeDatabase(database = pool) {
     await client.query(operations);
     await client.query(inventory);
     await client.query(checklists);
+    await client.query(scanning);
     await client.query('COMMIT');
   } catch (error) {
     await client.query('ROLLBACK');

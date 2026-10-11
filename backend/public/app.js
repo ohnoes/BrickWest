@@ -5,6 +5,7 @@
 
 import { quip, greeting, taskToast, installEasterEggs } from './brand.js';
 
+import { scanView, stopScanning } from './scanning.js';
 const STATUSES = ['milling', 'mashing', 'boiling', 'cooling', 'fermenting', 'packaging', 'complete'];
 const store = {
   get token() { return localStorage.getItem('bw.token'); },
@@ -746,10 +747,11 @@ async function inventoryView() {
 }
 
 // ---- Router and shell ------------------------------------------------------
-const NAV = [['today', 'Today'], ['batches', 'Batches'], ['checklists', 'Checklists'], ['recipes', 'Recipes'], ['inventory', 'Inventory']];
+const NAV = [['today', 'Today'], ['batches', 'Batches'], ['checklists', 'Checklists'], ['recipes', 'Recipes'], ['inventory', 'Inventory'], ['scan', 'Scan']];
 let renderCount = 0;
 
 async function render() {
+  stopScanning();
   if (!store.token) { app.replaceChildren(signInView()); return; }
   const [path, query = ''] = (location.hash.slice(2) || 'today').split('?');
   const [section, id] = path.split('/');
@@ -777,6 +779,7 @@ async function render() {
     else if (section === 'checklists') content = await checklistsView();
     else if (section === 'recipes') content = await recipesView();
     else if (section === 'inventory') content = await inventoryView();
+    else if (section === 'scan') content = await scanView({ api, h, openDialog, toast });
     else content = await todayView();
   } catch (err) {
     if (!store.token) return;
