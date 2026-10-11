@@ -10,6 +10,7 @@
   --green-deep: #153628;
   --amber: #c4820e;
   --amber-soft: #f3e3c2;
+  --brick: #9c3d2a;
   --alarm: #b42318;
   --alarm-soft: #fbe4e1;
   --display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
@@ -48,7 +49,8 @@ a { color: var(--green); }
   top: 0;
   height: 100vh;
 }
-.brand { font-family: var(--display); font-weight: 700; font-size: 1.6rem; line-height: 0.95; color: #fff; }
+.brand { display: flex; align-items: center; gap: 0.65rem; font-family: var(--display); font-weight: 700; font-size: 1.6rem; line-height: 0.95; color: #fff; }
+.brand-mark { display: block; flex: none; border-radius: 10px; cursor: default; user-select: none; -webkit-user-drag: none; }
 .brand small { display: block; font-family: var(--body); font-weight: 400; font-size: 0.8rem; color: #b9cdc2; margin-top: 0.3rem; }
 .nav { display: flex; flex-direction: column; gap: 0.15rem; }
 .nav a {
@@ -220,4 +222,27 @@ td a { font-weight: 600; }
 @media (prefers-reduced-motion: no-preference) {
   dialog[open] { animation: rise 0.16s ease-out; }
   @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+}
+
+/* ---- Brand ---- */
+/* A brick course along the top of the rail and sign-in panel. */
+.rail, .gate-side {
+  background-image: repeating-linear-gradient(90deg, var(--brick) 0 2.4rem, var(--green-deep) 2.4rem 2.55rem);
+  background-size: 100% 6px; background-repeat: no-repeat; background-color: var(--green);
+}
+.gate-mark { margin-bottom: 1.25rem; border-radius: 16px; }
+.quip { font-style: italic; color: var(--amber) !important; font-weight: 500; }
+
+/* Easter egg: rising foam. */
+.foam-party { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 30; }
+.foam-party span {
+  position: absolute; bottom: -40px; border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #fffdf6, #f3e3c2 70%);
+  box-shadow: inset -2px -2px 4px rgba(196, 130, 14, 0.35);
+  animation-name: foam-rise; animation-timing-function: ease-in; animation-fill-mode: forwards;
+}
+@keyframes foam-rise {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  10% { opacity: 0.95; }
+  100% { transform: translateY(-110vh) translateX(18px); opacity: 0; }
 }

@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { colors } from '../brand';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
@@ -61,7 +62,7 @@ const RecipesScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       {loading ? (
-        <ActivityIndicator size="large" color="#d4a574" style={styles.loader} />
+        <ActivityIndicator size="large" color={colors.amber} style={styles.loader} />
       ) : recipes.length === 0 ? (
         <View style={styles.empty}>
           <Text style={styles.emptyText}>No recipes yet</Text>
@@ -82,7 +83,7 @@ const RecipesScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a'
+    backgroundColor: colors.bg
   },
   loader: {
     flex: 1,
@@ -93,12 +94,12 @@ const styles = StyleSheet.create({
     paddingVertical: 12
   },
   recipeCard: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#d4a574'
+    borderLeftColor: colors.amber
   },
   cardHeader: {
     marginBottom: 8
@@ -110,7 +111,7 @@ const styles = StyleSheet.create({
     marginBottom: 4
   },
   style: {
-    color: '#d4a574',
+    color: colors.amber,
     fontSize: 12,
     textTransform: 'uppercase'
   },

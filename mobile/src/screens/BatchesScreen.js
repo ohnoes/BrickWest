@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { colors } from '../brand';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
@@ -107,7 +108,7 @@ const BatchesScreen = ({ navigation }) => {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#d4a574" style={styles.loader} />
+        <ActivityIndicator size="large" color={colors.amber} style={styles.loader} />
       ) : (
         <FlatList
           data={batches}
@@ -131,13 +132,13 @@ const BatchesScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a'
+    backgroundColor: colors.bg
   },
   filterContainer: {
     flexDirection: 'row',
     paddingHorizontal: 12,
     paddingVertical: 12,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.surface,
     gap: 8
   },
   filterButton: {
@@ -147,7 +148,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#333'
   },
   filterButtonActive: {
-    backgroundColor: '#d4a574'
+    backgroundColor: colors.amber
   },
   filterText: {
     color: '#999',
@@ -163,12 +164,12 @@ const styles = StyleSheet.create({
     paddingVertical: 12
   },
   batchCard: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#d4a574'
+    borderLeftColor: colors.amber
   },
   cardHeader: {
     flexDirection: 'row',
@@ -196,7 +197,7 @@ const styles = StyleSheet.create({
     marginBottom: 4
   },
   volume: {
-    color: '#d4a574',
+    color: colors.amber,
     fontSize: 14,
     fontWeight: '600',
     marginBottom: 4
@@ -216,7 +217,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#d4a574',
+    backgroundColor: colors.amber,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 5,

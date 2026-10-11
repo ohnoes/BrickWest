@@ -14,6 +14,7 @@ import BreweryTodayScreen from '../screens/BreweryTodayScreen';
 import BatchDetailScreen from '../screens/BatchDetailScreen';
 import RecipesScreen from '../screens/RecipesScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import { colors } from '../brand';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -22,7 +23,7 @@ const BatchesNavigator = () => (
   <Stack.Navigator
     initialRouteName="BatchesList"
     screenOptions={{
-      headerStyle: { backgroundColor: '#2a2a2a' },
+      headerStyle: { backgroundColor: colors.surface },
       headerTintColor: '#fff',
       headerTitleStyle: { fontWeight: 'bold' }
     }}
@@ -44,7 +45,7 @@ const BatchesNavigator = () => (
 const RecipesNavigator = () => (
   <Stack.Navigator
     screenOptions={{
-      headerStyle: { backgroundColor: '#2a2a2a' },
+      headerStyle: { backgroundColor: colors.surface },
       headerTintColor: '#fff',
       headerTitleStyle: { fontWeight: 'bold' }
     }}
@@ -95,10 +96,10 @@ const RootNavigator = () => {
       ) : (
         <Tab.Navigator
           screenOptions={{
-            tabBarStyle: { backgroundColor: '#2a2a2a', borderTopColor: '#444' },
-            tabBarActiveTintColor: '#d4a574',
+            tabBarStyle: { backgroundColor: colors.surface, borderTopColor: '#444' },
+            tabBarActiveTintColor: colors.amber,
             tabBarInactiveTintColor: '#666',
-            headerStyle: { backgroundColor: '#2a2a2a' },
+            headerStyle: { backgroundColor: colors.surface },
             headerTintColor: '#fff'
           }}
         >

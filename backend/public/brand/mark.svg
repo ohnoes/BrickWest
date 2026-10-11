@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Brickwest">
+  <!-- Brickwest mark: a pint laid in brick courses, under a head of foam. -->
+  <rect width="64" height="64" rx="14" fill="#1e4a39"/>
+  <path d="M18 22h28l-3 30a4 4 0 0 1-4 3.5H25a4 4 0 0 1-4-3.5z" fill="#c4820e"/>
+  <g stroke="#8a5a06" stroke-width="1.6" stroke-linecap="round" fill="none">
+    <path d="M19.4 31h25.2M20.3 39.5h23.4M21.2 48h21.6"/>
+    <path d="M32 22v9M25.5 31v8.5M38.5 31v8.5M32 39.5V48M27 48v6.5M37 48v6.5"/>
+  </g>
+  <path d="M16 23c-2.6 0-4-2-4-4.2 0-2.6 2.2-4.4 4.6-4 .8-3.3 3.8-5.3 7-4.8 1.8-2.6 5.4-3.6 8.4-2 2.8-1.8 6.8-1.2 8.8 1.4 3-.6 6 1.4 6.6 4.4 2.6 0 4.6 2.2 4.4 4.8-.2 2.4-2 4.4-4.6 4.4z" fill="#fffaf0"/>
+  <circle cx="27" cy="44" r="1.3" fill="#fffaf0" opacity=".75"/>
+  <circle cx="35" cy="35" r="1" fill="#fffaf0" opacity=".65"/>
+  <circle cx="31" cy="51" r=".9" fill="#fffaf0" opacity=".6"/>
+</svg>

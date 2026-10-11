@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import axios from 'axios';
 import { AuthContext } from '../auth/AuthContext';
+import { colors, tagline, cheers } from '../brand';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
@@ -42,10 +43,20 @@ const LoginScreen = ({ navigation }) => {
     }
   };
 
+  // Easter egg: tap the title five times.
+  const [taps, setTaps] = useState(0);
+  const [line] = useState(tagline);
+  const tapTitle = () => {
+    const next = taps + 1;
+    if (next >= 5) { setTaps(0); Alert.alert(cheers(), 'You found the shift beer. Now get back to work.'); }
+    else setTaps(next);
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Brewmaster</Text>
+      <Text style={styles.title} onPress={tapTitle} suppressHighlighting>Brewmaster</Text>
       <Text style={styles.subtitle}>Brickwest Brewing</Text>
+      <Text style={styles.tagline}>{line}</Text>
 
       <TextInput
         style={styles.input}
@@ -89,7 +100,7 @@ const LoginScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: colors.bg,
     justifyContent: 'center',
     paddingHorizontal: 20
   },
@@ -100,6 +111,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     textAlign: 'center'
   },
+  tagline: {
+    fontSize: 13,
+    fontStyle: 'italic',
+    color: colors.amber,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
   subtitle: {
     fontSize: 16,
     color: '#999',
@@ -107,7 +125,7 @@ const styles = StyleSheet.create({
     textAlign: 'center'
   },
   input: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.surface,
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -117,7 +135,7 @@ const styles = StyleSheet.create({
     borderColor: '#444'
   },
   button: {
-    backgroundColor: '#d4a574',
+    backgroundColor: colors.amber,
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: 'center',
@@ -132,7 +150,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold'
   },
   link: {
-    color: '#d4a574',
+    color: colors.amber,
     textAlign: 'center',
     marginTop: 20,
     fontSize: 14
