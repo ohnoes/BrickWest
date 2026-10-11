@@ -11,6 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import LoginScreen from '../screens/LoginScreen';
 import BatchesScreen from '../screens/BatchesScreen';
 import BreweryTodayScreen from '../screens/BreweryTodayScreen';
+import ScanInventoryScreen from '../screens/ScanInventoryScreen';
 import BatchDetailScreen from '../screens/BatchDetailScreen';
 import RecipesScreen from '../screens/RecipesScreen';
 import SettingsScreen from '../screens/SettingsScreen';
@@ -95,6 +96,7 @@ const RootNavigator = () => {
         </Stack.Navigator>
       ) : (
         <Tab.Navigator
+          initialRouteName="Today"
           screenOptions={{
             tabBarStyle: { backgroundColor: colors.surface, borderTopColor: '#444' },
             tabBarActiveTintColor: colors.amber,
@@ -112,6 +114,7 @@ const RootNavigator = () => {
               tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🏭</Text>
             }}
           />
+          <Tab.Screen name="Scan" component={ScanInventoryScreen} options={{ title: 'Scan inventory', tabBarLabel: 'Scan' }} />
           <Tab.Screen
             name="Batches"
             component={BatchesNavigator}

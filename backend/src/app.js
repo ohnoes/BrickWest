@@ -8,6 +8,7 @@ import batchRoutes from './routes/batches.js';
 import teamRoutes from './routes/team.js';
 import inventoryRoutes from './routes/inventory.js';
 import checklistRoutes from './routes/checklists.js';
+import scanRoutes from './routes/scanning.js';
 import { errorHandler, notFoundHandler } from './http.js';
 
 const PUBLIC_DIR = fileURLToPath(new URL('../public', import.meta.url));
@@ -57,6 +58,7 @@ export function createApp(options = {}) {
       res.set('Referrer-Policy', 'no-referrer');
     }
   }));
+  app.get('/vendor/zxing.js', (_req, res) => res.sendFile(fileURLToPath(new URL('../node_modules/@zxing/browser/umd/zxing-browser.min.js', import.meta.url))));
 
   app.use('/api/auth', createAuthRouter(options.auth));
   app.use('/api/recipes', recipeRoutes);
@@ -64,6 +66,7 @@ export function createApp(options = {}) {
   app.use('/api/team', teamRoutes);
   app.use('/api/inventory', inventoryRoutes);
   app.use('/api/checklists', checklistRoutes);
+  app.use('/api/scan', scanRoutes);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
