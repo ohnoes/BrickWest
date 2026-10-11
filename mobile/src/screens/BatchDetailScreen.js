@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { colors } from '../brand';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
@@ -98,7 +99,7 @@ const BatchDetailScreen = ({ route, navigation }) => {
   if (loading) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" color="#d4a574" />
+        <ActivityIndicator size="large" color={colors.amber} />
       </View>
     );
   }
@@ -209,10 +210,10 @@ const BatchDetailScreen = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a'
+    backgroundColor: colors.bg
   },
   header: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.surface,
     paddingHorizontal: 16,
     paddingVertical: 20,
     flexDirection: 'row',
@@ -225,13 +226,13 @@ const styles = StyleSheet.create({
     color: '#fff'
   },
   status: {
-    color: '#d4a574',
+    color: colors.amber,
     fontSize: 12,
     textTransform: 'uppercase',
     fontWeight: '600'
   },
   infoCard: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.surface,
     margin: 12,
     padding: 16,
     borderRadius: 8
@@ -248,7 +249,7 @@ const styles = StyleSheet.create({
     fontWeight: '600'
   },
   logSection: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.surface,
     margin: 12,
     padding: 16,
     borderRadius: 8
@@ -260,7 +261,7 @@ const styles = StyleSheet.create({
     marginBottom: 12
   },
   input: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: colors.bg,
     borderWidth: 1,
     borderColor: '#444',
     borderRadius: 6,
@@ -274,7 +275,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top'
   },
   button: {
-    backgroundColor: '#d4a574',
+    backgroundColor: colors.amber,
     paddingVertical: 12,
     borderRadius: 6,
     alignItems: 'center',
@@ -288,19 +289,19 @@ const styles = StyleSheet.create({
     fontWeight: 'bold'
   },
   historySection: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.surface,
     margin: 12,
     padding: 16,
     borderRadius: 8,
     marginBottom: 40
   },
   logEntry: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: colors.bg,
     padding: 12,
     borderRadius: 6,
     marginBottom: 12,
     borderLeftWidth: 3,
-    borderLeftColor: '#d4a574'
+    borderLeftColor: colors.amber
   },
   logTime: {
     color: '#999',

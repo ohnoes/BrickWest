@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { AuthContext } from '../auth/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { colors } from '../brand';
 
 const SettingsScreen = () => {
   const { signOut } = useContext(AuthContext);
@@ -61,16 +62,16 @@ const SettingsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: colors.bg,
     padding: 16
   },
   userCard: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 20,
     marginBottom: 24,
     borderLeftWidth: 4,
-    borderLeftColor: '#d4a574'
+    borderLeftColor: colors.amber
   },
   userName: {
     fontSize: 20,
@@ -80,7 +81,7 @@ const styles = StyleSheet.create({
   },
   userEmail: {
     fontSize: 14,
-    color: '#d4a574',
+    color: colors.amber,
     marginBottom: 4
   },
   userRole: {
@@ -99,7 +100,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase'
   },
   item: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.surface,
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 16,

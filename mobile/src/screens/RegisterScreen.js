@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import axios from 'axios';
 import { AuthContext } from '../auth/AuthContext';
+import { colors } from '../brand';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
@@ -105,7 +106,7 @@ const RegisterScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: colors.bg,
     justifyContent: 'center',
     paddingHorizontal: 20
   },
@@ -123,7 +124,7 @@ const styles = StyleSheet.create({
     textAlign: 'center'
   },
   input: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.surface,
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -133,7 +134,7 @@ const styles = StyleSheet.create({
     borderColor: '#444'
   },
   button: {
-    backgroundColor: '#d4a574',
+    backgroundColor: colors.amber,
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: 'center',
@@ -148,7 +149,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold'
   },
   link: {
-    color: '#d4a574',
+    color: colors.amber,
     textAlign: 'center',
     marginTop: 20,
     fontSize: 14

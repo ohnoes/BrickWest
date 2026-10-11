@@ -3,6 +3,8 @@
 // brewer types can run as script (the page's Content-Security-Policy backs
 // that up).
 
+import { quip, greeting, taskToast, installEasterEggs } from './brand.js';
+
 const STATUSES = ['milling', 'mashing', 'boiling', 'cooling', 'fermenting', 'packaging', 'complete'];
 const store = {
   get token() { return localStorage.getItem('bw.token'); },
@@ -350,8 +352,10 @@ function signInView() {
   draw();
   return h('div', { class: 'gate' },
     h('div', { class: 'gate-side' },
-      h('h1', {}, 'Brickwest Brewmaster'),
-      h('p', {}, 'Tanks, batches, readings and stock for the brewhouse floor.')),
+      h('div', {},
+        h('img', { class: 'brand-mark gate-mark', src: '/brand/mark.svg', alt: '', width: 72, height: 72 }),
+        h('h1', {}, 'Brick West', h('br'), 'Brewmaster')),
+      h('p', {}, quip('tagline'))),
     holder);
 }
 
@@ -385,12 +389,12 @@ async function todayView() {
   };
 
   const release = async vessel => {
-    try { await api('POST', `/team/vessels/${vessel.id}/release`); toast(`${vessel.name} is empty`); render(); }
+    try { await api('POST', `/team/vessels/${vessel.id}/release`); toast(`${vessel.name} is empty. Time to break out the caustic.`); render(); }
     catch (err) { toast(err.message); }
   };
 
   const setTask = async (task, status) => {
-    try { await api('PATCH', `/team/tasks/${task.id}/status`, { status }); toast(status === 'done' ? 'Task done' : 'Task updated'); render(); }
+    try { await api('PATCH', `/team/tasks/${task.id}/status`, { status }); toast(status === 'done' ? quip('done') : 'Task updated'); render(); }
     catch (err) { toast(err.message); }
   };
 
@@ -403,13 +407,14 @@ async function todayView() {
     ],
     onSubmit: async values => {
       if (values.due_at) values.due_at = new Date(values.due_at).toISOString();
-      await api('POST', '/team/tasks', values); toast('Task added'); render();
+      await api('POST', '/team/tasks', values); toast(taskToast(values.title)); render();
     }
   });
 
   return h('div', {},
     h('div', { class: 'page-head' },
-      h('div', {}, h('h1', {}, 'Today'), h('p', {}, new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })))),
+      h('div', {}, h('h1', {}, 'Today'), h('p', {}, new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })),
+        h('p', { class: 'quip' }, greeting()))),
     h('div', { class: 'figures' },
       h('div', { class: 'figure' }, h('b', {}, activeCount), h('span', {}, activeCount === 1 ? 'batch in progress' : 'batches in progress')),
       h('div', { class: 'figure' }, h('b', {}, today.tasks.due_today), h('span', {}, today.tasks.due_today === 1 ? 'task due today' : 'tasks due today')),
@@ -427,7 +432,7 @@ async function todayView() {
           v.batch_id
             ? h('button', { class: 'quiet small', onclick: () => release(v) }, 'Empty tank')
             : h('button', { class: 'small', onclick: () => assign(v) }, 'Assign batch'))))
-        : h('p', { class: 'empty' }, 'No tanks yet. Add your fermenters and brite tanks to see what is in each one.')),
+        : h('p', { class: 'empty' }, `No tanks yet. Add your fermenters and brite tanks to see what is in each one. ${quip('emptyTanks')}`)),
 
     h('section', { class: 'section' },
       h('div', { class: 'section-head' }, h('h2', {}, 'Open tasks'), h('button', { class: 'quiet small', onclick: addTask }, 'Add task')),
@@ -440,7 +445,7 @@ async function todayView() {
             task.status === 'open' ? h('button', { class: 'quiet small', onclick: () => setTask(task, 'in_progress') }, 'Start') : statusTag('in_progress'),
             h('button', { class: 'small', onclick: () => setTask(task, 'done') }, 'Done'));
         }))
-        : h('p', { class: 'empty' }, 'Nothing open. Add a task to remind the team about dry hops, transfers or cleaning.')),
+        : h('p', { class: 'empty' }, `${quip('emptyTasks')} Or add a task to remind the team about dry hops, transfers or cleaning.`)),
 
     openRuns.length
       ? h('section', { class: 'section' },
@@ -754,14 +759,16 @@ async function render() {
 
   const shell = h('div', { class: 'shell' },
     h('aside', { class: 'rail' },
-      h('div', { class: 'brand' }, 'Brickwest', h('small', {}, 'Brewmaster')),
+      h('div', { class: 'brand' },
+        h('img', { class: 'brand-mark', src: '/brand/mark.svg', alt: '', width: 40, height: 40, title: 'Brick West Brewing Co.' }),
+        h('span', {}, 'Brick West', h('small', {}, 'Brewmaster'))),
       h('nav', { class: 'nav', 'aria-label': 'Sections' }, NAV.map(([key, text]) => h('a', { href: `#/${key}`, 'aria-current': key === section ? 'page' : undefined }, text))),
       h('div', { class: 'who' }, store.user?.name || store.user?.email || '', h('br'), h('button', { class: 'quiet small', onclick: signOut }, 'Sign out'))),
     main);
 
   // Keep the page that is already showing until the new one has loaded.
   const current = ++renderCount;
-  if (!app.querySelector('.shell')) { main.append(h('p', { class: 'muted' }, 'Loading…')); app.replaceChildren(shell); }
+  if (!app.querySelector('.shell')) { main.append(h('p', { class: 'muted' }, quip('loading'))); app.replaceChildren(shell); }
   let content;
   try {
     if (outbox.read().length) await outbox.flush();
@@ -773,7 +780,7 @@ async function render() {
     else content = await todayView();
   } catch (err) {
     if (!store.token) return;
-    content = h('div', {}, h('h1', {}, 'This page did not load'),
+    content = h('div', {}, h('h1', {}, quip('error')),
       h('p', { class: 'empty' }, err instanceof ApiError ? err.message : 'Something went wrong while loading.'),
       h('button', { onclick: render }, 'Try again'));
     if (!(err instanceof ApiError)) console.error(err);
@@ -791,4 +798,5 @@ window.addEventListener('online', async () => {
   const sent = await outbox.flush();
   if (sent) { toast(sent === 1 ? 'Sent 1 saved checklist step' : `Sent ${sent} saved checklist steps`); render(); }
 });
+installEasterEggs({ toast });
 render();
